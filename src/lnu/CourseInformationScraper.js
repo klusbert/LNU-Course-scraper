@@ -25,12 +25,14 @@ export default class CourseLinkScraperInformationScraper {
     const courseID = jsdom.window.document.getElementById('education-page-education-code')
     const courseLevel = jsdom.window.document.getElementById('education-page-education-level')
     const syllabus = jsdom.window.document.getElementById('education-page-syllabus-url').getElementsByTagName('a')[0]
+    const teachingLanguage = jsdom.window.document.getElementById('education-page-teaching-language')
 
     return {
       courseTitle: courseTitle.innerHTML.trim(),
       courseID: courseID.innerHTML.trim(),
       courseLevel: courseLevel.innerHTML.trim(),
-      syllabus: syllabus.href
+      syllabus: syllabus.href,
+      teachingLanguage: teachingLanguage.innerHTML.trim()
     }
   }
 }
