@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "jsdom": "^16.4.0",
+    "mongoose": "^5.12.2",
     "node-fetch": "^2.6.1",
     "puppeteer": "^8.0.0",
     "validator": "^13.1.17"
