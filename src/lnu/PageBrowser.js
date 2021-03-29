@@ -17,7 +17,7 @@ export default class PageBrowser {
   /**
    * Start finding all pages.
    *
-   * @returns {string[]} - List of urls.
+   * @returns {Promise<string[]>} - List of urls.
    */
   async getPages () {
     const htmlResponse = await fetch(this._url)
