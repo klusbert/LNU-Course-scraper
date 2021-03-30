@@ -9,11 +9,10 @@ export default class CourseLinkScraper {
    * Init CourseScraper.
    *
    * @param {string} lnuURL - LNU course page.
-   * @param {string} lnuBASEURL - The baseurl of lnu.
    */
-  constructor (lnuURL, lnuBASEURL) {
+  constructor (lnuURL) {
     this._lnuURL = lnuURL
-    this._lnuBASEURL = lnuBASEURL
+    this._lnuBASEURL = 'https://lnu.se/'
   }
 
   /**

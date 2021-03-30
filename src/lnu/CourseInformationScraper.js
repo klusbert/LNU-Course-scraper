@@ -23,31 +23,34 @@ export default class CourseLinkScraperInformationScraper {
       const htmlResponse = await fetch(this._courseURL)
       const htmlText = await htmlResponse.text()
       const jsdom = new JSDOM(htmlText)
-
-      const courseTitle = this._getCourseTitle(jsdom)
       const courseID = this._getCourseID(jsdom)
-      const courseLevel = this._getCourseLevel(jsdom)
-      const syllabusURL = this._getSyllabus(jsdom)
-
-      const prerequisites = this._getPrerequisites(jsdom)
-
-      const teachingLanguage = this._getTeachingLanguage(jsdom)
-
-      const courseGroup = courseID[1] + courseID[2]
 
       return {
-        courseTitle: courseTitle,
+        courseTitle: this._getCourseTitle(jsdom),
         courseID: courseID,
-        courseLevel: courseLevel,
-        syllabus: syllabusURL,
-        teachingLanguage: teachingLanguage,
-        courseGroup: courseGroup,
-        prerequisites: prerequisites,
-        courseURL: this._courseURL
+        courseLevel: this._getCourseLevel(jsdom),
+        syllabus: this._getSyllabus(jsdom),
+        teachingLanguage: this._getTeachingLanguage(jsdom),
+        courseGroup: courseID[1] + courseID[2],
+        prerequisites: this._getPrerequisites(jsdom),
+        courseURL: this._courseURL,
+        isDistance: this._isDistance(jsdom)
       }
     } catch (e) {
       console.log(this._courseURL)
     }
+  }
+
+  /**
+   * Parses if the course is distance or not.
+   *
+   * @param {object} jsdom Jsdom object
+   * @returns {boolean} return true if it is a distance course.
+   */
+  _isDistance (jsdom) {
+    const teachingForm = jsdom.window.document.getElementById('education-page-teaching-form-and-pace').innerHTML.trim()
+
+    return teachingForm.includes('Distans')
   }
 
   /**
