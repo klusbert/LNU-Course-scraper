@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 import { JSDOM } from 'jsdom'
 
 /**
- * Scrapes courses links from LNU.
+ * Scrapes courses links from LNU page.
  */
 export default class CourseLinkScraper {
   /**
@@ -12,7 +12,7 @@ export default class CourseLinkScraper {
    */
   constructor (lnuURL) {
     this._lnuURL = lnuURL
-    this._lnuBASEURL = 'https://lnu.se/'
+    this._lnuBASEURL = 'https://lnu.se'
   }
 
   /**

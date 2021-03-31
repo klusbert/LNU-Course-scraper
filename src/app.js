@@ -1,20 +1,13 @@
-import CourseLinkScraper from './lnu/CourseLinkScraper.js'
-import CourseLinkScraperInformationScraper from './lnu/CourseInformationScraper.js'
-import PageBrowser from './lnu/PageBrowser.js'
-import * as url from 'url'
-
+import LNUCourses from './model/LnuCourses.js'
 import Database from './model/Database.js'
 import { Course } from './model/Schemas/Course.js'
 
-const mongoConnectionString = 'mongodb://localhost:27017/'
+const mongoConnectionString = 'mongodb://192.168.0.101:27017/'
 const mongoDBName = 'courses'
 
 const db = new Database(mongoConnectionString, mongoDBName)
 let mongo = null
-
-const courses = []
-let count = 0
-
+let lastPercent
 /**
  * Starting point of the application.
  */
@@ -22,56 +15,83 @@ async function main () {
   // get databaseConnection from db, not using the mongo instance.
   mongo = await db.getConnection()
 
-  const coursePageBrowser = new PageBrowser('https://lnu.se/utbildning/sok-program-eller-kurs/?educationtype=Kurs&level=Grund%C2%ADniv%C3%A5&s=alphabeticallyasc')
-  // const coursePageBrowser = new PageBrowser('https://lnu.se/utbildning/sok-program-eller-kurs/?cat=60&educationtype=Kurs&level=Grund%C2%ADniv%C3%A5&s=alphabeticallyasc')
-  const startTime = new Date()
-  const pages = await coursePageBrowser.getPages()
+  const sweCoursesScraper = new LNUCourses('https://lnu.se/utbildning/sok-program-eller-kurs/?educationtype=Kurs&level=Grund%C2%ADniv%C3%A5&s=alphabeticallyasc', true)
+  const engCoursesScraper = new LNUCourses('https://lnu.se/en/education/exchange-studies/courses-and-programmes-for-exchange-students/', false)
 
-  await Promise.all(pages.map(async (page) => {
-    const courseLinkScraper = new CourseLinkScraper(page)
-    const links = await courseLinkScraper.getCourseLinks()
-    await Promise.all(links.map(async (link) => {
-      const courseInformation = new CourseLinkScraperInformationScraper(link)
+  await saveSwedishCourses(await sweCoursesScraper.getCourses(fetchPercentage, 'Fetching Swedish courses'))
 
-      const course = await courseInformation.getCourseInformation()
-      await saveCourse(course)
-    }))
-  }))
-  console.log('\n\nDone scraping courses.\n\t Time elapsed: ' + (new Date() - startTime) / 1000 + 's')
+  await saveEnglishCourses(await engCoursesScraper.getCourses(fetchPercentage, 'Fetching English Courses'))
 
-  // exit the applicaiton with error code 0(good)
+  console.log('DONE')
+
   process.exit(0)
 }
+/**
+ * Print percentage.
+ *
+ * @param {string} caller - Who called the method.
+ * @param {number} percentage - Percent as number.
+ */
+function fetchPercentage (caller, percentage) {
+  if (lastPercent !== percentage) {
+    lastPercent = percentage
+    console.log(caller + ' ' + percentage + '%')
+  }
+}
 
+/**
+ * Updates the courses with english title and course page.
+ *
+ * @param {object[]}courses - List of courses.
+ */
+async function saveEnglishCourses (courses) {
+  let count = 0
+  for (const course of courses) {
+    const newCourse = await Course.findOne({ courseID: course.courseID })
+    if (newCourse) {
+      fetchPercentage('Saving ENGCourses to Mongo ', Math.round(count++ / courses.length * 100.0))
+      newCourse.courseTitleEnglish = course.courseTitle
+      newCourse.prerequisitesENG = course.prerequisites
+      newCourse.courseURLENG = course.courseURL
+
+      await newCourse.save()
+    }
+  }
+}
 /**
  * Prints course information and count.
  *
  * @param {object} course - Course object.
+ * @param courses
  */
-async function saveCourse (course) {
-  console.log(`${count++}: ${course.courseTitle} - ${course.courseID} ${course.isDistance}`)
+async function saveSwedishCourses (courses) {
+  let count = 0
 
-  let newCourse = await Course.findOne({ courseURL: course.courseURL })
+  for (const course of courses) {
+    let newCourse = await Course.findOne({ courseID: course.courseID })
 
-  // if the course is not stored in db, lets create new one.
-  // if it exist let's just update the properties.
-  if (!newCourse) {
-    newCourse = new Course()
+    fetchPercentage('Saving SWECourses to Mongo ', Math.round(count++ / courses.length * 100.0))
+    if (!newCourse) {
+      newCourse = await new Course()
+    }
+    newCourse.courseTitle = course.courseTitle
+    newCourse.courseID = course.courseID
+    newCourse.courseLevel = course.courseLevel
+    newCourse.syllabus = course.syllabus
+    newCourse.syllabusENG = course.syllabusENG
+    newCourse.teachingLanguage = course.teachingLanguage
+    newCourse.courseGroup = course.courseGroup
+    newCourse.prerequisites = course.prerequisites
+    newCourse.courseURL = course.courseURL
+    newCourse.isDistance = course.isDistance
+    newCourse.courseSpeed = course.courseSpeed
+
+    await newCourse.save()
   }
-  newCourse.courseTitle = course.courseTitle
-  newCourse.courseID = course.courseID
-  newCourse.courseLevel = course.courseLevel
-  newCourse.syllabus = course.syllabus
-  newCourse.teachingLanguage = course.teachingLanguage
-  newCourse.courseGroup = course.courseGroup
-  newCourse.prerequisites = course.prerequisites
-  newCourse.courseURL = course.courseURL
-  newCourse.isDistance = course.isDistance
-
-  await newCourse.save()
 }
 
-main().then(console.error)
+main()
+
 // if application exits we close the connection to mongo.
 process.on('SIGINT', () => {
   if (mongo != null) mongo.connection.close()
