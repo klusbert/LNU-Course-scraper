@@ -2,10 +2,7 @@ import LNUCourses from './model/LnuCourses.js'
 import Database from './model/Database.js'
 import { Course } from './model/Schemas/Course.js'
 
-const mongoConnectionString = 'mongodb://192.168.0.101:27017/'
-// const mongoConnectionString = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PW}@cluster0.zv6lx.mongodb.net/courses?retryWrites=true`
-
-const db = new Database(mongoConnectionString, process.env.MONGO_DATABASE_NAME)
+const db = new Database(process.env.CONNECTION_STRING, process.env.MONGO_DATABASE_NAME)
 let mongo = null
 let lastPercent
 
