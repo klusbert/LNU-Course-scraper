@@ -35,6 +35,7 @@ export default class CourseLinkScraperInformationScraper {
       return {
         courseTitle: this._getCourseTitle(jsdom),
         courseID: courseID,
+        courseDescription: this._getCourseDescription(jsdom),
         courseLevel: this._getCourseLevel(jsdom),
         syllabus: swedishSyllabus,
         syllabusENG: engSyllabus,
@@ -47,6 +48,26 @@ export default class CourseLinkScraperInformationScraper {
       }
     } catch (e) {
       console.log(this._courseURL + '\n' + e)
+    }
+  }
+
+  /**
+   * Returns course information.
+   *
+   * @param {object} jsdom Jsdom object
+   * @returns {string} - Course Desc.
+   */
+  _getCourseDescription (jsdom) {
+    try {
+      const desc = jsdom.window.document.getElementById('education-page-description')
+      if (desc) {
+        return desc.innerHTML.trim()
+      }
+
+      return ''
+    } catch (e) {
+      console.log('error parsing course desc' + e.message + this._courseURL)
+      return ''
     }
   }
 
@@ -69,7 +90,7 @@ export default class CourseLinkScraperInformationScraper {
    * Parses if the course is distance or not.
    *
    * @param {object} jsdom Jsdom object
-   * @returns {boolean} return true if it is a distance course.
+   * @returns {number} return course speed.
    */
   _getCourseSpeed (jsdom) {
     try {
